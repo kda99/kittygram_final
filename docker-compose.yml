@@ -3,25 +3,43 @@ version: '3'
 volumes:
   pg_data:
   static:
+  media:
 
 services:
+
   db:
+    env_file: .env
     image: postgres:13
     volumes:
       - pg_data:/var/lib/postgresql/data
+
   backend:
     build: ./backend/
+    depends_on:
+      - db
+    volumes:
+    # Нам нужно собрать статику, а потом скопировать ее в папку
+    # контейнера /backend_static руками.
+    # docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
+      - static:/backend_static
+    # Медиа будет сохраняться в папку котнейнера /media
+      - media:/media
     env_file: .env
+
   frontend:
     env_file: .env
     build: ./frontend/
-    command: cp -r /app/build/. /static/
+    command: cp -r /app/build/. /frontend_static/
     volumes:
-      - static:/static
+      - static:/frontend_static
+
   gateway:
     build: ./nginx/
+    depends_on:
+      - backend
     env_file: .env
     ports:
-      - 9000:80
+      - 8000:80
     volumes:
-      - static:/static
+      - static:/staticfiles
+      - media:/media
