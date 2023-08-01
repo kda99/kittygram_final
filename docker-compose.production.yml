@@ -1,0 +1,46 @@
+version: '3'
+
+volumes:
+  pg_data_production:
+  static_volume:
+  media_volume:
+
+services:
+
+  db:
+    env_file: .env
+    image: postgres:13
+    volumes:
+      - pg_data_production:/var/lib/postgresql/data
+
+  backend:
+    image: kda99/kittygram_backend
+    depends_on:
+      - db
+    volumes:
+    # Нам нужно собрать статику, а потом скопировать ее в папку
+    # контейнера /backend_static руками.
+    # docker compose exec backend cp -r /app/collected_static/. /backend_static/static/
+      - static_volume:/backend_static
+    # Медиа будет сохраняться в папку котнейнера /media
+      - media_volume:/media
+    env_file: .env
+
+  frontend:
+    env_file: .env
+    image: kda99/kittygram_frontend
+    command: cp -r /app/build/. /frontend_static/
+    volumes:
+      - static_volume:/frontend_static
+
+  gateway:
+    image: kda99/kittygram_gateway
+    depends_on:
+      - backend
+    env_file: .env
+    ports:
+      - 9000:80
+    volumes:
+      - static_volume:/staticfiles
+      - media_volume:/media
+
