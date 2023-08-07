@@ -6,6 +6,7 @@ WORKDIR /app
 # Копируем все, что в директории backend в директорию /app контейнера.
 COPY . .
 # Устанавливаем биб-ки в окружение.
+RUN pip install gunicorn==20.1.0
 RUN pip install -r requirements.txt --no-cache-dir
 # Запускаем gunicorn на 8000 порту.
 # Ключ --bind 0.0.0.0:8000 привяжет приложение Taski к порту 8000,
